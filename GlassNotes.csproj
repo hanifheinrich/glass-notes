@@ -13,6 +13,12 @@
     <Version>1.0.8</Version>
   </PropertyGroup>
 
+  <!-- GlassNotesBar is a separate .NET Framework program with its own build.cmd -->
+  <ItemGroup>
+    <Compile Remove="GlassNotesBar\**" />
+    <None Remove="GlassNotesBar\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <Resource Include="Assets\icon.ico" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />

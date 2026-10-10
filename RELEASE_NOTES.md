@@ -6,6 +6,8 @@
 * **Rich Text Formatting**: Sticky Notes style formatting bar with bold (Ctrl+B), italic (Ctrl+I), underline (Ctrl+U), strikethrough (Ctrl+T) and bullet lists (Ctrl+Shift+L). Formatting is saved with each note; older plain-text notes open unchanged.
 * **Dark Mode**: Redesigned Light and Dark themes plus a "Follow Windows" option in Settings → General. Background and text colors now offer "Theme default" so notes always match the theme.
 
+* **Taskbar Button**: Optional GlassNotesBar companion that shows and hides Glass Notes from the Windows taskbar, with a "Show button on taskbar" setting in Settings → General. Release downloads include `GlassNotesBar.exe`.
+
 ### Fixed
 * **Note Arrangement**: Notes reordered by drag and drop now keep their order after restarting. Dragging shows a drop indicator and scrolls the list near its edges.
 

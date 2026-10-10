@@ -36,6 +36,13 @@ A formatting bar under every note, like Windows Sticky Notes:
 - Background and text colors have a **Theme default** option so notes always match the theme. The original custom colors are still available.
 - Every part of the app follows the theme: notes list, settings, dropdowns, context menus, scrollbars, sliders and checkboxes.
 
+### Taskbar button (GlassNotesBar)
+A small companion program that puts the Glass Notes logo on the Windows taskbar, next to the system tray (similar to TrafficMonitor).
+- **Left-click** shows or hides Glass Notes (and starts it if it isn't running). **Right-click** opens a menu.
+- Turn it on or off in **Settings → General → Show button on taskbar**. When on, it starts with Windows.
+- Put `GlassNotesBar.exe` in the same folder as `GlassNotes.exe` (both are attached to each release), or install it to `%LOCALAPPDATA%\Programs\GlassNotesBar\`. Without it the setting is greyed out.
+- Made for the Windows 10 taskbar (horizontal; vertical taskbars are not supported). The Windows 11 taskbar is built differently and has not been tested.
+
 ### Look and feel
 - Emoji buttons replaced with Windows line icons (Segoe MDL2 Assets), an outline logo in the title bar, and a red hover on close buttons.
 
@@ -70,6 +77,14 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 
 The app is then in `publish\GlassNotes.exe`.
 
+The taskbar button is a small .NET Framework 4 program built with the C# compiler included in Windows (no SDK needed):
+
+```powershell
+GlassNotesBar\build.cmd publish
+```
+
+This puts `GlassNotesBar.exe` next to `GlassNotes.exe` in `publish\`. Without an argument it builds to `GlassNotesBar\bin\`.
+
 ## Usage
 
 - **Drag the title bar** to move the window
@@ -99,7 +114,8 @@ GlassNotes/
 ├── Resources/
 │   ├── Themes/          # Light and Dark theme colors
 │   └── Styles/          # Control and button styles
-└── Assets/              # Icons and images
+├── Assets/              # Icons and images
+└── GlassNotesBar/       # Taskbar button, separate program (fork)
 ```
 
 ## Technology stack
@@ -115,4 +131,4 @@ MIT License, see [LICENSE](LICENSE). The original copyright notice from psipher 
 ## Credits
 
 - Original app: [Glass Notes by psipher](https://github.com/psipher/GlassNotes)
-- Fork changes: rich text, note ordering, dark mode and UI refresh
+- Fork changes: rich text, note ordering, dark mode, taskbar button and UI refresh

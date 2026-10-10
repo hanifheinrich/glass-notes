@@ -27,8 +27,12 @@ jobs:
         run: |
           dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o ./publish
 
-      - name: Upload Binary to GitHub Release
+      - name: Build Taskbar Button
+        shell: cmd
+        run: GlassNotesBar\build.cmd "%GITHUB_WORKSPACE%\publish"
+
+      - name: Upload Binaries to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.event.release.tag_name }} ./publish/GlassNotes.exe --clobber
+          gh release upload ${{ github.event.release.tag_name }} ./publish/GlassNotes.exe ./publish/GlassNotesBar.exe --clobber

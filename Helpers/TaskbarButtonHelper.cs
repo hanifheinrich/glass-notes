@@ -17,9 +17,17 @@ public static class TaskbarButtonHelper
     private const string ProcessName = "GlassNotesBar";
     private const string ExitSignalName = "GlassNotesBar_Exit";
 
-    private static readonly string BarExe = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        @"Programs\GlassNotesBar\GlassNotesBar.exe");
+    // GlassNotesBar.exe next to GlassNotes.exe (as in the release download), otherwise the per-user install folder
+    private static readonly string BarExe = FindBarExe();
+
+    private static string FindBarExe()
+    {
+        var sideBySide = Path.Combine(AppContext.BaseDirectory, "GlassNotesBar.exe");
+        if (File.Exists(sideBySide)) return sideBySide;
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            @"Programs\GlassNotesBar\GlassNotesBar.exe");
+    }
 
     public static bool IsInstalled => File.Exists(BarExe);
 
