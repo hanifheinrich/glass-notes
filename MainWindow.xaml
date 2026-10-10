@@ -415,6 +415,9 @@
                                 <Slider x:Name="SO_TransparencySlider" Minimum="0.1" Maximum="1.0" Value="1.0" SmallChange="0.05" LargeChange="0.1"/>
                                 <TextBlock x:Name="SO_TransparencyLabel" Text="100%" Style="{StaticResource SettingHint}" Margin="0,4,0,14"/>
                                 <CheckBox x:Name="SO_AlwaysOnTopCheckBox" Content="Always on top" FontSize="13"/>
+                                <CheckBox x:Name="SO_ShowTaskbarButtonCheckBox" Content="Show button on taskbar" FontSize="13" Margin="0,12,0,0"/>
+                                <TextBlock x:Name="SO_TaskbarButtonHint" Style="{StaticResource SettingHint}" Margin="26,4,0,0"
+                                           Text="A taskbar button to show and hide Glass Notes. Starts with Windows."/>
                             </StackPanel>
 
                             <StackPanel x:Name="SO_PanelColors" Visibility="Collapsed">

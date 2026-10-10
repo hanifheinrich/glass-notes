@@ -293,6 +293,13 @@ public partial class MainWindow : Window
         SelectComboByTag(SO_TextColorComboBox, ViewModel.Settings.TextColor);
         SelectComboByTag(SO_FontFamilyComboBox, ViewModel.Settings.FontFamily);
         SelectComboByTag(SO_ThemeComboBox, ViewModel.Settings.Theme);
+
+        // The taskbar button is a separate program; without it the option is greyed out
+        SO_ShowTaskbarButtonCheckBox.SetCurrentValue(System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty, TaskbarButtonHelper.IsEnabled);
+        SO_ShowTaskbarButtonCheckBox.SetCurrentValue(IsEnabledProperty, TaskbarButtonHelper.IsInstalled);
+        SO_ShowTaskbarButtonCheckBox.SetCurrentValue(OpacityProperty, TaskbarButtonHelper.IsInstalled ? 1.0 : 0.5);
+        if (!TaskbarButtonHelper.IsInstalled)
+            SO_TaskbarButtonHint.SetCurrentValue(TextBlock.TextProperty, "Not available: the GlassNotesBar taskbar button is not installed.");
     }
 
     private static void SelectComboByTag(ComboBox box, string? value)
@@ -319,6 +326,9 @@ public partial class MainWindow : Window
             ApplyBackgroundColor(ViewModel.Settings.BackgroundColor);
             ViewModel.SaveSettings();
         };
+
+        SO_ShowTaskbarButtonCheckBox.Checked += (s, e) => TaskbarButtonHelper.Enable();
+        SO_ShowTaskbarButtonCheckBox.Unchecked += (s, e) => TaskbarButtonHelper.Disable();
 
         SO_AlwaysOnTopCheckBox.Checked += (s, e) => { SetCurrentValue(TopmostProperty, true); ViewModel.Settings.AlwaysOnTop = true; ViewModel.SaveSettings(); };
         SO_AlwaysOnTopCheckBox.Unchecked += (s, e) => { SetCurrentValue(TopmostProperty, false); ViewModel.Settings.AlwaysOnTop = false; ViewModel.SaveSettings(); };
