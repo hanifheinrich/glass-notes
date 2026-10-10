@@ -1,6 +1,7 @@
 <Window x:Class="GlassNotes.NoteWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:GlassNotes.Controls"
         Title="{Binding Title}" 
         Height="360" Width="420"
         WindowStyle="None"
@@ -44,7 +45,7 @@
                                Margin="16,8"/>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="4,4">
-                        <Button Content="✕" Style="{StaticResource IconButton}"
+                        <Button Content="&#xE8BB;" Style="{StaticResource CloseGlyphButton}" FontSize="10"
                                 Click="CloseButton_Click" ToolTip="Close" Width="32" Height="32"/>
                     </StackPanel>
                 </Grid>
@@ -52,14 +53,11 @@
 
             <!-- Note Content Area -->
             <Grid Grid.Row="1" Margin="8" ClipToBounds="True">
-                <TextBox x:Name="NoteTextBox"
-                         Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}"
-                         AcceptsReturn="True" TextWrapping="Wrap"
-                         BorderThickness="0" Background="Transparent"
-                         Foreground="{DynamicResource NoteForegroundBrush}"
-                         FontSize="14"
-                         VerticalScrollBarVisibility="Auto"
-                         Padding="12"/>
+                <controls:NoteEditor x:Name="NoteEditor"
+                                     Note="{Binding}"
+                                     Foreground="{DynamicResource NoteForegroundBrush}"
+                                     FontSize="14"
+                                     Padding="4"/>
             </Grid>
         </Grid>
     </Border>

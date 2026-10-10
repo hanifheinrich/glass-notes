@@ -15,6 +15,13 @@ public partial class Note : ObservableObject
     [ObservableProperty]
     private string _content = string.Empty;
 
+    /// <summary>
+    /// Formatted content (bold, italic, strikethrough, bullets) serialized by RichTextSerializer.
+    /// Content keeps the plain text for titles and search; older notes only have Content.
+    /// </summary>
+    [ObservableProperty]
+    private string _richContent = string.Empty;
+
     public DateTime CreatedAt { get; set; }
     public DateTime ModifiedAt { get; set; }
 

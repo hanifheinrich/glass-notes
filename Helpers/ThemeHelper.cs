@@ -25,12 +25,9 @@ public static class ThemeHelper
         }
 
         // Add new theme
-        var themeUri = theme.ToLower() switch
-        {
-            "light" => new Uri("Resources/Themes/LightTheme.xaml", UriKind.Relative),
-            "dark" => new Uri("Resources/Themes/DarkTheme.xaml", UriKind.Relative),
-            _ => new Uri("Resources/Themes/DarkTheme.xaml", UriKind.Relative)
-        };
+        var themeUri = ResolveTheme(theme) == "Light"
+            ? new Uri("Resources/Themes/LightTheme.xaml", UriKind.Relative)
+            : new Uri("Resources/Themes/DarkTheme.xaml", UriKind.Relative);
 
         try
         {
@@ -40,6 +37,33 @@ public static class ThemeHelper
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error applying theme: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// "Light" or "Dark" for a theme setting; "System" follows the Windows app mode.
+    /// </summary>
+    public static string ResolveTheme(string theme)
+    {
+        return theme.ToLower() switch
+        {
+            "light" => "Light",
+            "system" => IsWindowsInLightMode() ? "Light" : "Dark",
+            _ => "Dark"
+        };
+    }
+
+    private static bool IsWindowsInLightMode()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            return key?.GetValue("AppsUseLightTheme") is not int value || value != 0;
+        }
+        catch
+        {
+            return true;
         }
     }
 

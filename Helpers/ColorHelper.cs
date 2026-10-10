@@ -1,13 +1,18 @@
+using System.Windows;
 using System.Windows.Media;
 
 namespace GlassNotes.Helpers;
 
 public static class ColorHelper
 {
+    /// <summary>Color setting that follows the current light/dark theme.</summary>
+    public const string ThemeColor = "Theme";
+
     public static SolidColorBrush GetBackgroundBrush(string colorName)
     {
         return colorName switch
         {
+            ThemeColor => new SolidColorBrush(GetThemeColor("WindowBackgroundColor", Colors.White)),
             "Cream" => new SolidColorBrush(Color.FromRgb(255, 253, 208)), // #FFFDD0
             "White" => new SolidColorBrush(Colors.White),
             "Black" => new SolidColorBrush(Color.FromRgb(30, 30, 30)), // #1E1E1E
@@ -24,6 +29,7 @@ public static class ColorHelper
     {
         return colorName switch
         {
+            ThemeColor => new SolidColorBrush(GetThemeColor("TextPrimaryColor", Colors.Black)),
             "Black" => new SolidColorBrush(Colors.Black),
             "Dark Gray" => new SolidColorBrush(Color.FromRgb(64, 64, 64)), // #404040
             "Gray" => new SolidColorBrush(Color.FromRgb(128, 128, 128)), // #808080
@@ -34,5 +40,10 @@ public static class ColorHelper
             "Purple" => new SolidColorBrush(Color.FromRgb(128, 0, 128)), // #800080
             _ => new SolidColorBrush(Colors.Black) // Default to Black
         };
+    }
+
+    private static Color GetThemeColor(string key, Color fallback)
+    {
+        return Application.Current?.TryFindResource(key) is Color color ? color : fallback;
     }
 }

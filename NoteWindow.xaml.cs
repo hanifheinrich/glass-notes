@@ -26,12 +26,12 @@ namespace GlassNotes
 
             Closing += NoteWindow_Closing;
 
-            NoteTextBox.TextChanged += (s, e) =>
+            NoteEditor.ContentChanged += (s, e) =>
             {
                 _autoSaveTimer.Stop();
                 _autoSaveTimer.Start();
 
-                var firstLine = NoteTextBox.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                var firstLine = note.Content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
                 if (!string.IsNullOrWhiteSpace(firstLine))
                 {
                     note.Title = firstLine.Length > 30 ? firstLine.Substring(0, 30) + "..." : firstLine;

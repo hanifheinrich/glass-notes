@@ -18,6 +18,11 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         DataContext = new MainViewModel();
+
+        // Apply the theme before the window is built so it never flashes the wrong colors
+        ThemeHelper.ApplyTheme(ViewModel.Settings.Theme);
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
+
         InitializeComponent();
 
         // Load saved window position and size
@@ -63,9 +68,6 @@ public partial class MainWindow : Window
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        // Apply theme
-        ThemeHelper.ApplyTheme(ViewModel.Settings.Theme);
-
         // Set always on top
         SetCurrentValue(TopmostProperty, ViewModel.Settings.AlwaysOnTop);
 
@@ -89,6 +91,8 @@ public partial class MainWindow : Window
 
         // Cleanup ViewModel
         ViewModel.Cleanup();
+
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
 
         // Unregister global hotkey
         if (PresentationSource.FromVisual(this) is HwndSource source)
@@ -164,7 +168,7 @@ public partial class MainWindow : Window
         base.OnStateChanged(e);
         if (MaximizeButton != null)
         {
-            MaximizeButton.SetCurrentValue(ContentProperty, WindowState == WindowState.Maximized ? "❐" : "☐");
+            MaximizeButton.SetCurrentValue(ContentProperty, WindowState == WindowState.Maximized ? "" : "");
             MaximizeButton.SetCurrentValue(ToolTipProperty, WindowState == WindowState.Maximized ? "Restore" : "Maximize");
         }
     }
@@ -219,12 +223,11 @@ public partial class MainWindow : Window
         SO_PanelFont.SetCurrentValue(VisibilityProperty, tabName == "Font" ? Visibility.Visible : Visibility.Collapsed);
         SO_PanelAbout.SetCurrentValue(VisibilityProperty, tabName == "About" ? Visibility.Visible : Visibility.Collapsed);
 
-        var gray = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x88, 0x88, 0x88));
-        var black = System.Windows.Media.Brushes.Black;
-        SO_TabGeneral.SetCurrentValue(ForegroundProperty, tabName == "General" ? black : gray);
-        SO_TabColors.SetCurrentValue(ForegroundProperty, tabName == "Colors" ? black : gray);
-        SO_TabFont.SetCurrentValue(ForegroundProperty, tabName == "Font" ? black : gray);
-        SO_TabAbout.SetCurrentValue(ForegroundProperty, tabName == "About" ? black : gray);
+        // Resource references so the tab colors follow a theme change
+        SO_TabGeneral.SetResourceReference(ForegroundProperty, tabName == "General" ? "TextPrimaryBrush" : "TextSecondaryBrush");
+        SO_TabColors.SetResourceReference(ForegroundProperty, tabName == "Colors" ? "TextPrimaryBrush" : "TextSecondaryBrush");
+        SO_TabFont.SetResourceReference(ForegroundProperty, tabName == "Font" ? "TextPrimaryBrush" : "TextSecondaryBrush");
+        SO_TabAbout.SetResourceReference(ForegroundProperty, tabName == "About" ? "TextPrimaryBrush" : "TextSecondaryBrush");
 
         // Move underline
         Button? targetButton = tabName switch
@@ -289,6 +292,7 @@ public partial class MainWindow : Window
         SelectComboByTag(SO_BackgroundColorComboBox, ViewModel.Settings.BackgroundColor);
         SelectComboByTag(SO_TextColorComboBox, ViewModel.Settings.TextColor);
         SelectComboByTag(SO_FontFamilyComboBox, ViewModel.Settings.FontFamily);
+        SelectComboByTag(SO_ThemeComboBox, ViewModel.Settings.Theme);
     }
 
     private static void SelectComboByTag(ComboBox box, string? value)
@@ -299,6 +303,15 @@ public partial class MainWindow : Window
 
     private void SO_AttachEventHandlers()
     {
+        SO_ThemeComboBox.SelectionChanged += (s, e) =>
+        {
+            if (SO_ThemeComboBox.SelectedItem is ComboBoxItem item)
+            {
+                ViewModel.Settings.Theme = item.Tag?.ToString() ?? "System";
+                ApplyThemeAndColors();
+            }
+        };
+
         SO_TransparencySlider.ValueChanged += (s, e) =>
         {
             ViewModel.Settings.Opacity = e.NewValue;
@@ -349,6 +362,25 @@ public partial class MainWindow : Window
         };
     }
 
+    private void SystemEvents_UserPreferenceChanged(object sender, Microsoft.Win32.UserPreferenceChangedEventArgs e)
+    {
+        // Windows switched between light and dark app mode
+        if (e.Category == Microsoft.Win32.UserPreferenceCategory.General && ViewModel.Settings.Theme == "System")
+            Dispatcher.BeginInvoke(ApplyThemeAndColors);
+    }
+
+    /// <summary>
+    /// Switches the theme, then recomputes the colors set from code ("Theme default" depends on the theme)
+    /// and passes them on to open note windows through SaveSettings.
+    /// </summary>
+    private void ApplyThemeAndColors()
+    {
+        ThemeHelper.ApplyTheme(ViewModel.Settings.Theme);
+        ApplyBackgroundColor(ViewModel.Settings.BackgroundColor);
+        ApplyTextColor(ViewModel.Settings.TextColor);
+        ViewModel.SaveSettings();
+    }
+
     public void UpdateOpacity(double opacity)
     {
         ViewModel.Settings.Opacity = opacity;
@@ -385,65 +417,177 @@ public partial class MainWindow : Window
         }
 
         // Keep text editor transparent
-        if (NoteTextBox != null)
+        if (NoteEditor != null)
         {
-            NoteTextBox.SetCurrentValue(Control.BackgroundProperty, System.Windows.Media.Brushes.Transparent);
+            NoteEditor.SetCurrentValue(Control.BackgroundProperty, System.Windows.Media.Brushes.Transparent);
         }
     }
 
     private void ApplyTextColor(string colorName)
     {
-        if (NoteTextBox != null)
+        if (NoteEditor != null)
         {
-            NoteTextBox.SetCurrentValue(Control.ForegroundProperty, Helpers.ColorHelper.GetTextBrush(colorName));
+            NoteEditor.SetCurrentValue(Control.ForegroundProperty, Helpers.ColorHelper.GetTextBrush(colorName));
         }
     }
 
-    // Drag and drop support
-    private Models.Note? _draggedNote;
+    // ── Drag and drop to arrange notes ───────────────────────────────────────
+    private Models.Note? _dragCandidate;
+    private Point _dragStartPoint;
+    private DropIndicatorAdorner? _dropIndicator;
+    private ListBoxItem? _dropIndicatorItem;
 
-    private void NotesListBox_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    private void NotesListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed && NotesListBox.SelectedItem is Models.Note note)
+        // Only a press on a note can start a drag (not the scrollbar or empty space)
+        _dragCandidate = GetItemFromPoint(e.GetPosition(NotesListBox))?.DataContext as Models.Note;
+        _dragStartPoint = e.GetPosition(NotesListBox);
+    }
+
+    private void NotesListBox_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _dragCandidate == null) return;
+
+        var delta = e.GetPosition(NotesListBox) - _dragStartPoint;
+        if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance)
+            return;
+
+        var note = _dragCandidate;
+        _dragCandidate = null;
+        try
         {
-            _draggedNote = note;
             DragDrop.DoDragDrop(NotesListBox, note, DragDropEffects.Move);
         }
+        finally
+        {
+            HideDropIndicator();
+        }
+    }
+
+    private void NotesListBox_DragOver(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(typeof(Models.Note)))
+        {
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
+        e.Effects = DragDropEffects.Move;
+        e.Handled = true;
+
+        var point = e.GetPosition(NotesListBox);
+        AutoScrollNotesList(point.Y);
+
+        var (item, below) = GetDropTarget(point);
+        if (item == null) HideDropIndicator();
+        else ShowDropIndicator(item, below);
+    }
+
+    private void NotesListBox_DragLeave(object sender, DragEventArgs e)
+    {
+        // DragLeave also fires when moving between items; only hide when the pointer left the list
+        var point = e.GetPosition(NotesListBox);
+        if (point.X < 0 || point.Y < 0 || point.X > NotesListBox.ActualWidth || point.Y > NotesListBox.ActualHeight)
+            HideDropIndicator();
     }
 
     private void NotesListBox_Drop(object sender, DragEventArgs e)
     {
-        if (_draggedNote != null && e.Data.GetDataPresent(typeof(Models.Note)))
-        {
-            var targetItem = GetNoteFromPoint(e.GetPosition(NotesListBox));
-            if (targetItem != null && targetItem != _draggedNote)
-            {
-                int oldIndex = ViewModel.Notes.IndexOf(_draggedNote);
-                int newIndex = ViewModel.Notes.IndexOf(targetItem);
+        HideDropIndicator();
+        if (e.Data.GetData(typeof(Models.Note)) is not Models.Note dragged) return;
 
-                if (oldIndex != -1 && newIndex != -1)
-                {
-                    ViewModel.Notes.Move(oldIndex, newIndex);
+        var (item, below) = GetDropTarget(e.GetPosition(NotesListBox));
+        if (item?.DataContext is not Models.Note target || target == dragged) return;
 
-                    // Save custom order
-                    ViewModel.Settings.CustomNoteOrder = ViewModel.Notes.Select(n => n.Id).ToList();
-                    ViewModel.SaveSettings();
-                }
-            }
-            _draggedNote = null;
-        }
+        int oldIndex = ViewModel.Notes.IndexOf(dragged);
+        int insertAt = ViewModel.Notes.IndexOf(target) + (below ? 1 : 0);
+        if (oldIndex == -1 || insertAt < 0) return;
+
+        // Removing the note first shifts everything after it up by one
+        ViewModel.MoveNote(dragged, oldIndex < insertAt ? insertAt - 1 : insertAt);
+        NotesListBox.SetCurrentValue(System.Windows.Controls.Primitives.Selector.SelectedItemProperty, dragged);
+        e.Handled = true;
     }
 
-    private Models.Note? GetNoteFromPoint(System.Windows.Point point)
+    /// <summary>
+    /// The note under the pointer, and whether the drop goes below it (lower half of the item).
+    /// Below the last note counts as dropping after it.
+    /// </summary>
+    private (ListBoxItem? Item, bool Below) GetDropTarget(Point point)
+    {
+        // Measure by position instead of hit testing, so the gaps between notes still count
+        ListBoxItem? last = null;
+        for (int i = 0; i < NotesListBox.Items.Count; i++)
+        {
+            if (NotesListBox.ItemContainerGenerator.ContainerFromIndex(i) is not ListBoxItem item || !item.IsVisible)
+                continue;
+
+            double top = item.TranslatePoint(new Point(), NotesListBox).Y;
+            if (point.Y < top + item.ActualHeight)
+                return (item, point.Y > top + item.ActualHeight / 2);
+            last = item;
+        }
+
+        return last != null ? (last, true) : (null, false);
+    }
+
+    private ListBoxItem? GetItemFromPoint(Point point)
     {
         var element = NotesListBox.InputHitTest(point) as DependencyObject;
-        while (element != null)
+        while (element != null && element != NotesListBox)
         {
-            if (element is ListBoxItem item)
-            {
-                return item.DataContext as Models.Note;
-            }
+            if (element is ListBoxItem item) return item;
             element = System.Windows.Media.VisualTreeHelper.GetParent(element);
+        }
+        return null;
+    }
+
+    private void ShowDropIndicator(ListBoxItem item, bool below)
+    {
+        if (_dropIndicatorItem == item && _dropIndicator != null)
+        {
+            _dropIndicator.Below = below;
+            return;
+        }
+
+        HideDropIndicator();
+        var layer = System.Windows.Documents.AdornerLayer.GetAdornerLayer(item);
+        if (layer == null) return;
+
+        _dropIndicator = new DropIndicatorAdorner(item, below);
+        _dropIndicatorItem = item;
+        layer.Add(_dropIndicator);
+    }
+
+    private void HideDropIndicator()
+    {
+        if (_dropIndicator != null && _dropIndicatorItem != null)
+        {
+            System.Windows.Documents.AdornerLayer.GetAdornerLayer(_dropIndicatorItem)?.Remove(_dropIndicator);
+        }
+        _dropIndicator = null;
+        _dropIndicatorItem = null;
+    }
+
+    private void AutoScrollNotesList(double y)
+    {
+        const double edge = 24;
+        var scrollViewer = FindChild<ScrollViewer>(NotesListBox);
+        if (scrollViewer == null) return;
+
+        if (y < edge) scrollViewer.LineUp();
+        else if (y > NotesListBox.ActualHeight - edge) scrollViewer.LineDown();
+    }
+
+    private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is T found) return found;
+            if (FindChild<T>(child) is T nested) return nested;
         }
         return null;
     }

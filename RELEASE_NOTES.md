@@ -1,8 +1,22 @@
-# Release Notes - GlassNotes v1.0.7
+# Release Notes - GlassNotes v1.0.8
 
-This release resolves critical data-loss issues related to note auto-saving and introduces static analysis guidelines to prevent future regressions.
+## [v1.0.8] - 2026-10-10
+
+### Added
+* **Rich Text Formatting**: Sticky Notes style formatting bar with bold (Ctrl+B), italic (Ctrl+I), underline (Ctrl+U), strikethrough (Ctrl+T) and bullet lists (Ctrl+Shift+L). Formatting is saved with each note; older plain-text notes open unchanged.
+* **Dark Mode**: Redesigned Light and Dark themes plus a "Follow Windows" option in Settings → General. Background and text colors now offer "Theme default" so notes always match the theme.
+
+### Fixed
+* **Note Arrangement**: Notes reordered by drag and drop now keep their order after restarting. Dragging shows a drop indicator and scrolls the list near its edges.
+
+### Improved
+* **Icons**: Emoji buttons replaced with Segoe MDL2 line icons, an outline logo, and a red hover on close buttons.
+
+---
 
 ## [v1.0.7] - 2026-06-10
+
+This release resolves critical data-loss issues related to note auto-saving and introduces static analysis guidelines to prevent future regressions.
 
 ### Fixed
 * **Note Switching Data Loss**: Fixed a bug where unsaved changes to a note were lost if the user switched to another note before the 3-second auto-save timer fired. Changes are now flushed to disk immediately upon switching.

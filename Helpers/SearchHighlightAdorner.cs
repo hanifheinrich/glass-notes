@@ -7,16 +7,17 @@ namespace GlassNotes.Helpers
 {
     public class SearchHighlightAdorner : Adorner
     {
-        private readonly TextBox _textBox;
+        private readonly RichTextBox _textBox;
         private string _searchText;
         private readonly Brush _highlightBrush;
         private readonly Pen _highlightPen;
 
-        public SearchHighlightAdorner(TextBox textBox, string searchText) : base(textBox)
+        public SearchHighlightAdorner(RichTextBox textBox, string searchText) : base(textBox)
         {
             _textBox = textBox;
             _searchText = searchText;
             ClipToBounds = true;
+            IsHitTestVisible = false;
 
             // Semi-transparent yellow highlight with rounded corners
             _highlightBrush = new SolidColorBrush(Color.FromArgb(120, 255, 215, 0));
@@ -43,40 +44,45 @@ namespace GlassNotes.Helpers
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            if (string.IsNullOrEmpty(_searchText) || string.IsNullOrEmpty(_textBox.Text))
+            if (string.IsNullOrEmpty(_searchText))
             {
                 return;
             }
 
-            // Explicitly clip the adornment to the bounds of the TextBox
+            // Explicitly clip the adornment to the bounds of the editor
             // This prevents highlights from rendering over toolbars or scrollbars when scrolled out of view.
             drawingContext.PushClip(new RectangleGeometry(new Rect(0, 0, _textBox.RenderSize.Width, _textBox.RenderSize.Height)));
 
-            string text = _textBox.Text;
-            string search = _searchText;
-
-            int index = 0;
-            while ((index = text.IndexOf(search, index, StringComparison.OrdinalIgnoreCase)) != -1)
+            // Search inside each run of text (matches are not joined across formatting changes)
+            var document = _textBox.Document;
+            for (var pointer = document.ContentStart; pointer != null && pointer.CompareTo(document.ContentEnd) < 0;
+                 pointer = pointer.GetNextContextPosition(LogicalDirection.Forward))
             {
-                // Measure the exact character bounds
-                int endIndex = index + search.Length;
+                if (pointer.GetPointerContext(LogicalDirection.Forward) != TextPointerContext.Text) continue;
 
-                // Ensure we do not go out of bounds (can happen during live typing)
-                if (endIndex > _textBox.Text.Length) break;
-
-                Rect startRect = _textBox.GetRectFromCharacterIndex(index);
-                Rect endRect = _textBox.GetRectFromCharacterIndex(endIndex - 1, true); // Use trailing edge of last char
-
-                if (!startRect.IsEmpty && !endRect.IsEmpty)
+                string text = pointer.GetTextInRun(LogicalDirection.Forward);
+                int index = 0;
+                while ((index = text.IndexOf(_searchText, index, StringComparison.OrdinalIgnoreCase)) != -1)
                 {
-                    // For single line, or simple word wrapping, create a bounding box
-                    Rect highlightRect = new Rect(startRect.TopLeft, endRect.BottomRight);
-                    highlightRect.Inflate(2, 2);
+                    var start = pointer.GetPositionAtOffset(index);
+                    var end = pointer.GetPositionAtOffset(index + _searchText.Length);
+                    if (start != null && end != null)
+                    {
+                        Rect startRect = start.GetCharacterRect(LogicalDirection.Forward);
+                        Rect endRect = end.GetCharacterRect(LogicalDirection.Backward);
 
-                    drawingContext.DrawRoundedRectangle(_highlightBrush, _highlightPen, highlightRect, 3, 3);
+                        if (!startRect.IsEmpty && !endRect.IsEmpty)
+                        {
+                            // For single line, or simple word wrapping, create a bounding box
+                            Rect highlightRect = new Rect(startRect.TopLeft, endRect.BottomRight);
+                            highlightRect.Inflate(2, 2);
+
+                            drawingContext.DrawRoundedRectangle(_highlightBrush, _highlightPen, highlightRect, 3, 3);
+                        }
+                    }
+
+                    index += _searchText.Length;
                 }
-
-                index += search.Length;
             }
 
             // Remove the clip

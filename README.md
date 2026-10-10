@@ -1,120 +1,118 @@
-# Glass Notes - Transparent Notes App for Windows
+# Glass Notes (fork) - Transparent Notes App for Windows
 
-![Glass Notes Homepage](Assets/screenshots/homepage.png)
+> **This is a fork of [psipher/GlassNotes](https://github.com/psipher/GlassNotes)** (based on upstream v1.0.7).
+> It adds rich text formatting in the style of Windows Sticky Notes, drag-and-drop note ordering that persists,
+> and a redesigned dark mode. All credit for the original app goes to [psipher](https://github.com/psipher).
 
-Glass Notes is a modern, lightweight, **open-source** note-taking application for Windows 10/11 that features a beautiful **transparent overlay**. If you are looking for a transparent notes app, a minimalist sticky notes alternative, or an "always on top" desktop widget for productivity, Glass Notes is designed perfectly for your workflow!
+Glass Notes is a lightweight note-taking app for Windows 10/11 with a transparent, always-on-top window.
+For the original app, the Microsoft Store release and upstream development, see the
+[original repository](https://github.com/psipher/GlassNotes).
 
-### Download
+## What this fork adds (v1.0.8)
 
-<a href="https://apps.microsoft.com/store/detail/9N5SVJGDBHH2?cid=DevShareMCLPCS">
-  <img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="Get it from Microsoft"/>
-</a>
+### Rich text formatting
+A formatting bar under every note, like Windows Sticky Notes:
 
-## Features
+| Format | Button | Shortcut |
+|---|---|---|
+| **Bold** | **B** | `Ctrl + B` |
+| *Italic* | *I* | `Ctrl + I` |
+| Underline | U | `Ctrl + U` |
+| ~~Strikethrough~~ | ~~ab~~ | `Ctrl + T` |
+| Bullet list | ☰ | `Ctrl + Shift + L` |
 
-- **Always On Top** - Keep your notes visible while working in other applications
-- **Customizable Appearance** - Choose between light and dark themes
-- **Adjustable Transparency** - Set the perfect opacity level (10%-100%)
-- **Hide Notes** - Quickly toggle the visibility of all your notes to declutter your workspace
-- **Multiple Notes** - Create and manage multiple notes with quick switching
-  ![Multiple Tabs Example](Assets/screenshots/open_multiple_tabs.png)
-- **Auto-Save** - Your notes are automatically saved every 3 seconds
-- **Clean, Modern Interface** - Built with Windows Fluent Design principles
-- **Lightweight & Fast** - Minimal resource usage, instant startup
-- **Resizable Windows** - Adjust size and position to fit your workflow
+- Works in the main window and in notes opened in their own window.
+- Formatting is saved with the note. Notes from the original app open unchanged, and lines starting with `•` become a bullet list.
+- Pasting from other apps inserts plain text, so outside fonts and colors don't end up in your notes.
+
+### Arrange notes by drag and drop
+- Drag a note up or down in the list; a line shows where it will land.
+- The order is kept after restarting the app (upstream saved it but did not restore it).
+- The list scrolls when you drag near its top or bottom edge.
+
+### Dark mode
+- Redesigned Light and Dark themes: neutral graphite surfaces and off-white text in dark mode, a gold accent taken from the app icon.
+- **Settings → General → Theme**: *Follow Windows*, *Light* or *Dark*. Switching applies instantly; *Follow Windows* also follows Windows when it changes mode.
+- Background and text colors have a **Theme default** option so notes always match the theme. The original custom colors are still available.
+- Every part of the app follows the theme: notes list, settings, dropdowns, context menus, scrollbars, sliders and checkboxes.
+
+### Look and feel
+- Emoji buttons replaced with Windows line icons (Segoe MDL2 Assets), an outline logo in the title bar, and a red hover on close buttons.
+
+See [RELEASE_NOTES.md](RELEASE_NOTES.md) for the full list of changes.
+
+## Compatibility with the original app
+
+Notes and settings use the same location as the original app (`%APPDATA%\GlassNotes\`), so this fork picks up existing notes.
+Formatting is stored in a new `RichContent` field. **If a note is saved by the original app, that field is dropped and the note's formatting is lost** (the text itself stays). Avoid running both versions at the same time.
 
 ## Requirements
 
 - Windows 10 (version 1809 or later) or Windows 11
-- .NET 10.0 Runtime
+- .NET 10.0 Desktop Runtime, or use the self-contained build below
 
-## Building from Source
+## Building from source
 
-### Prerequisites
-
-- .NET 10.0 SDK
-
-### Build Instructions
-
-1. Clone or download this repository
-2. Open a terminal in the project directory
-3. Run the following commands:
+Requires the [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ```powershell
-cd GlassNotes
-dotnet restore
-dotnet build
-```
-
-### Run the Application
-
-```powershell
+git clone https://github.com/hanifheinrich/glass-notes.git
+cd glass-notes
+dotnet build -c Release
 dotnet run
 ```
 
-Or build a release version:
+Self-contained single-file build (no runtime needed on the target PC), the same as the upstream release workflow:
 
 ```powershell
-dotnet build --configuration Release
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o ./publish
 ```
 
-The executable will be in: `bin\Release\net10.0-windows\GlassNotes.exe`
+The app is then in `publish\GlassNotes.exe`.
 
 ## Usage
 
-### Basic Controls
-
 - **Drag the title bar** to move the window
-- **Hide/Show Notes** by clicking the eye icon or pressing `Ctrl + Shift + Z`
-- **Click the gear icon** to open settings
-- **Click New** to create a new note
-- **Click Delete** to delete the current note
-- **Type directly** in the text area - changes auto-save
+- **Hide/Show notes** with the eye icon or `Ctrl + Shift + Z`
+- **Gear icon** opens Settings (theme, transparency, always on top, colors, font)
+- **Plus icon** creates a new note; right-click a note to open it in a new window or delete it
+- **Double-click a note** to open it in its own window
+- Changes are saved automatically
 
-### Settings
+## Data storage
 
-![Settings Menu](Assets/screenshots/settings.png)
-- **Opacity**: Adjust window transparency (10%-100%)
-- **Font Size**: Change text size (10-24pt)
-- **Theme**: Switch between Light and Dark modes
-- **Always on Top**: Toggle whether window stays above other windows
-
-## Data Storage
-
-Notes and settings are stored in:
 ```
 %APPDATA%\GlassNotes\
-├── Notes\           # Individual note files (.json)
-└── settings.json    # Application settings
+├── Notes\           # One .json file per note (plain text + formatting)
+└── settings.json    # App settings, including theme and note order
 ```
 
-## Technology Stack
-
-- **Framework**: WPF with .NET 10
-- **MVVM**: CommunityToolkit.Mvvm
-- **Data**: Newtonsoft.Json for persistence
-- **Design**: Windows Fluent Design with Acrylic effects
-
-## Project Structure
+## Project structure
 
 ```
 GlassNotes/
+├── Controls/            # NoteEditor: rich text editor with formatting bar (fork)
 ├── Models/              # Data models (Note, AppSettings)
 ├── ViewModels/          # MVVM view models
-├── Services/            # Business logic (NoteService, SettingsService)
-├── Helpers/             # Utility classes (WindowBlurHelper, ThemeHelper)
+├── Services/            # NoteService, SettingsService
+├── Helpers/             # Theme, colors, rich text serializer, adorners
 ├── Resources/
-│   ├── Themes/         # Light and Dark theme definitions
-│   └── Styles/         # Control styles (buttons, textboxes, etc.)
-├── Controls/           # Custom user controls
-└── Assets/             # Icons and images
+│   ├── Themes/          # Light and Dark theme colors
+│   └── Styles/          # Control and button styles
+└── Assets/              # Icons and images
 ```
+
+## Technology stack
+
+- WPF on .NET 10
+- CommunityToolkit.Mvvm
+- Newtonsoft.Json
 
 ## License
 
-This project is open-source and licensed under the [MIT License](LICENSE).
+MIT License, see [LICENSE](LICENSE). The original copyright notice from psipher is kept as the license requires.
 
-## Contributing
+## Credits
 
-Contributions are welcome! Feel free to submit issues and pull requests.
-
+- Original app: [Glass Notes by psipher](https://github.com/psipher/GlassNotes)
+- Fork changes: rich text, note ordering, dark mode and UI refresh

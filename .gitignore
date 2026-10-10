@@ -30,3 +30,6 @@ Thumbs.db
 Desktop.ini
 .agent/rules/snyk_rules.md
 .vscode/settings.json
+
+# Local publish output (single-file exe, too large for GitHub)
+publish/

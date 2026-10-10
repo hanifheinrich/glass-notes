@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:GlassNotes.ViewModels"
-        xmlns:GlassHelpers="clr-namespace:GlassNotes.Helpers"
+        xmlns:controls="clr-namespace:GlassNotes.Controls"
         Title="Glass Notes" 
         Height="520" Width="680"
         MinHeight="420" MinWidth="620"
@@ -57,16 +57,20 @@
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="14,10">
                             <!-- Custom App Icon -->
                             <Viewbox Width="20" Height="20" Margin="0,0,8,0">
+                                <!-- Outline logo in the theme text color -->
                                 <Grid Width="24" Height="24">
-                                    <!-- Note Page -->
-                                    <Path Data="M4,2 L16,2 L20,6 L20,22 L4,22 Z" Fill="#FFD700" Stroke="#E0C000" StrokeThickness="1"/>
-                                    <!-- Folded Corner -->
-                                    <Path Data="M16,2 L16,6 L20,6 Z" Fill="#FFC107"/>
+                                    <!-- Note page with folded corner -->
+                                    <Path Data="M4.5,2.5 L15.5,2.5 L19.5,6.5 L19.5,21.5 L4.5,21.5 Z M15.5,2.5 L15.5,6.5 L19.5,6.5"
+                                          Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5"
+                                          StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                     <!-- Lines -->
-                                    <Path Data="M7,8 L17,8 M7,12 L17,12 M7,16 L14,16" Stroke="#808080" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                    <Path Data="M8,10 L16,10 M8,13.5 L16,13.5 M8,17 L12,17"
+                                          Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                     <!-- Pen -->
-                                    <Path Data="M16,16 L22,22 M16,16 L18,18" Stroke="#2196F3" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                    <Path Data="M15,15 L23,23" Stroke="#1976D2" StrokeThickness="1"/>
+                                    <Path Data="M15,15 L22.5,22.5"
+                                          Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                 </Grid>
                             </Viewbox>
                             <TextBlock Text="Glass Notes"
@@ -76,11 +80,11 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="4,6">
-                            <Button Content="—" Style="{StaticResource IconButton}"
+                            <Button Content="&#xE921;" Style="{StaticResource GlyphButton}" FontSize="10"
                                     Click="MinimizeButton_Click" ToolTip="Minimize" Margin="2"/>
-                            <Button x:Name="MaximizeButton" Content="☐" Style="{StaticResource IconButton}"
+                            <Button x:Name="MaximizeButton" Content="&#xE922;" Style="{StaticResource GlyphButton}" FontSize="10"
                                     Click="MaximizeButton_Click" ToolTip="Maximize" Margin="2"/>
-                            <Button Content="✕" Style="{StaticResource IconButton}"
+                            <Button Content="&#xE8BB;" Style="{StaticResource CloseGlyphButton}" FontSize="10"
                                     Click="CloseButton_Click" ToolTip="Close" Margin="2"/>
                         </StackPanel>
                     </Grid>
@@ -112,9 +116,9 @@
 
                             <!-- Search Box -->
                             <Grid Grid.Row="0" Margin="10,0,10,8">
-                                <Border Background="{DynamicResource SurfaceBrush}"
+                                <Border Background="{DynamicResource ControlBackgroundBrush}"
                                         CornerRadius="8"
-                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderBrush="{DynamicResource ControlBorderBrush}"
                                         BorderThickness="1"
                                         Height="30">
                                     <Grid>
@@ -122,11 +126,12 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="🔍" 
-                                                   FontSize="12" 
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                        <TextBlock Text="&#xE721;"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                                    VerticalAlignment="Center"
-                                                   Margin="8,0,4,0"
+                                                   Margin="10,0,4,0"
                                                    IsHitTestVisible="False"/>
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
@@ -135,6 +140,8 @@
                                                  VerticalContentAlignment="Center"
                                                  FontSize="12"
                                                  Foreground="{DynamicResource TextPrimaryBrush}"
+                                                 CaretBrush="{DynamicResource TextPrimaryBrush}"
+                                                 SelectionBrush="{DynamicResource TextSelectionBrush}"
                                                  Padding="2,0,8,0">
                                             <TextBox.Resources>
                                                 <Style TargetType="{x:Type Border}">
@@ -146,7 +153,7 @@
                                         <TextBlock Grid.Column="1"
                                                    Text="Search notes..."
                                                    FontSize="12"
-                                                   Foreground="#999999"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                                    VerticalAlignment="Center"
                                                    Margin="6,0,0,0"
                                                    IsHitTestVisible="False">
@@ -176,7 +183,10 @@
                                      BorderThickness="0"
                                      Margin="6,0,6,6"
                                      AllowDrop="True"
+                                     PreviewMouseLeftButtonDown="NotesListBox_PreviewMouseLeftButtonDown"
                                      MouseMove="NotesListBox_MouseMove"
+                                     DragOver="NotesListBox_DragOver"
+                                     DragLeave="NotesListBox_DragLeave"
                                      Drop="NotesListBox_Drop"
                                      MouseDoubleClick="NotesListBox_MouseDoubleClick">
                                 <ListBox.ContextMenu>
@@ -210,16 +220,16 @@
                                                                Margin="0,2,0,0"/>
                                                     
                                                     <!-- Launch to Window Button (Visible on Hover maybe?) -->
-                                                    <Button Content="↗" 
+                                                    <Button Content="&#xE8A7;"
                                                             HorizontalAlignment="Right"
                                                             VerticalAlignment="Center"
-                                                            FontSize="12" Width="20" Height="20"
+                                                            FontSize="11" Width="22" Height="20"
                                                             Padding="0" Margin="0,0,4,0"
                                                             ToolTip="Open in New Window"
                                                             Command="{Binding DataContext.OpenNoteInNewWindowCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding}">
                                                         <Button.Style>
-                                                            <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                            <Style TargetType="Button" BasedOn="{StaticResource GlyphButton}">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
@@ -233,11 +243,12 @@
                                             </StackPanel>
                                         </Border>
                                         <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                <Setter TargetName="NoteItemBorder" Property="Background" Value="{DynamicResource NoteItemHoverBackgroundBrush}"/>
+                                            </DataTrigger>
                                             <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                                <Setter TargetName="NoteItemBorder" Property="BorderBrush" Value="#E2E2E2"/>
-                                                <Setter TargetName="NoteItemBorder" Property="Background" Value="White"/>
-                                                <Setter TargetName="TitleText" Property="Foreground" Value="#1A1A1A"/>
-                                                <Setter TargetName="DateText" Property="Foreground" Value="#666666"/>
+                                                <Setter TargetName="NoteItemBorder" Property="BorderBrush" Value="{DynamicResource NoteItemSelectedBorderBrush}"/>
+                                                <Setter TargetName="NoteItemBorder" Property="Background" Value="{DynamicResource NoteItemSelectedBackgroundBrush}"/>
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
@@ -248,16 +259,12 @@
 
                     <!-- Note Content Area -->
                     <Grid Grid.Column="1" Margin="8" ClipToBounds="True">
-                        <TextBox x:Name="NoteTextBox"
-                                 Text="{Binding CurrentNote.Content, UpdateSourceTrigger=PropertyChanged}"
-                                 GlassHelpers:SearchHighlightBehavior.SearchText="{Binding SearchText}"
-                                 AcceptsReturn="True" TextWrapping="Wrap"
-                                 BorderThickness="0" Background="Transparent"
-                                 Foreground="{DynamicResource TextPrimaryBrush}"
-                                 FontSize="{Binding Settings.FontSize}"
-                                 FontFamily="{Binding Settings.FontFamily}"
-                                 VerticalScrollBarVisibility="Auto"
-                                 Padding="8"/>
+                        <controls:NoteEditor x:Name="NoteEditor"
+                                             Note="{Binding CurrentNote}"
+                                             SearchText="{Binding SearchText}"
+                                             Foreground="{DynamicResource TextPrimaryBrush}"
+                                             FontSize="{Binding Settings.FontSize}"
+                                             FontFamily="{Binding Settings.FontFamily}"/>
                     </Grid>
                 </Grid>
 
@@ -268,17 +275,17 @@
                         Height="46">
                     <StackPanel Orientation="Horizontal" Margin="8,0"
                                 HorizontalAlignment="Left" VerticalAlignment="Center">
-                        <Button Content="➕" Style="{StaticResource IconButton}"
+                        <Button Content="&#xE710;" Style="{StaticResource GlyphButton}"
                                 Command="{Binding CreateNewNoteCommand}"
-                                ToolTip="New Note" FontSize="16"
+                                ToolTip="New Note" FontSize="15"
                                 Width="36" Height="36" Margin="2,0"/>
-                        <Button Content="⚙️" Style="{StaticResource IconButton}"
+                        <Button Content="&#xE713;" Style="{StaticResource GlyphButton}"
                                 Click="SettingsButton_Click"
-                                ToolTip="Settings" FontSize="16"
+                                ToolTip="Settings" FontSize="15"
                                 Width="36" Height="36" Margin="2,0"/>
-                        <Button Content="👁️" Style="{StaticResource IconButton}"
+                        <Button Content="&#xE7B3;" Style="{StaticResource GlyphButton}"
                                 Command="{Binding ToggleAllNotesVisibilityCommand}"
-                                ToolTip="Hide/Unhide all notes (Ctrl + Shift + Z)" FontSize="16"
+                                ToolTip="Hide/Unhide all notes (Ctrl + Shift + Z)" FontSize="15"
                                 Width="36" Height="36" Margin="2,0"/>
                     </StackPanel>
                 </Border>
@@ -290,12 +297,48 @@
               Visibility="Collapsed"
               HorizontalAlignment="Center"
               VerticalAlignment="Center"
-              Width="380" Height="360"
+              Width="380" Height="400"
               Panel.ZIndex="100">
-            <Border Background="White" CornerRadius="16" BorderThickness="0">
+            <Grid.Resources>
+                <Style x:Key="SettingsTab" TargetType="Button">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="Padding" Value="8,10"/>
+                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter Margin="{TemplateBinding Padding}"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+                <Style x:Key="TabGlyph" TargetType="TextBlock">
+                    <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+                    <Setter Property="FontSize" Value="13"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                    <Setter Property="Margin" Value="0,1,7,0"/>
+                </Style>
+                <Style x:Key="SettingLabel" TargetType="TextBlock">
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="FontSize" Value="13"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                    <Setter Property="Margin" Value="0,0,0,8"/>
+                </Style>
+                <Style x:Key="SettingHint" TargetType="TextBlock">
+                    <Setter Property="FontSize" Value="12"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                    <Setter Property="TextWrapping" Value="Wrap"/>
+                </Style>
+            </Grid.Resources>
+
+            <Border Background="{DynamicResource PopupBackgroundBrush}" CornerRadius="16"
+                    BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1">
                 <Border.Effect>
                     <DropShadowEffect Color="#000000" BlurRadius="32"
-                                      ShadowDepth="6" Opacity="0.22" Direction="270"/>
+                                      ShadowDepth="6" Opacity="0.28" Direction="270"/>
                 </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -305,132 +348,53 @@
                     </Grid.RowDefinitions>
 
                     <!-- Settings Header — drag moves the MAIN window -->
-                    <Grid Grid.Row="0" Margin="24,24,16,8"
+                    <Grid Grid.Row="0" Margin="24,22,16,4"
                           MouseLeftButtonDown="SettingsHeader_MouseLeftButtonDown"
                           Cursor="SizeAll">
-                        <TextBlock Text="Settings" FontSize="26" FontWeight="Bold"
-                                   Foreground="#1A1A1A" VerticalAlignment="Center"/>
-                        <Button Content="✕" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                Width="32" Height="32" Click="SettingsCloseButton_Click"
-                                Cursor="Hand" FontSize="14">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Setter Property="Foreground" Value="#888888"/>
-                                    <Setter Property="Cursor" Value="Hand"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="bg" Background="{TemplateBinding Background}" CornerRadius="8">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="bg" Property="Background" Value="#F0F0F0"/>
-                                                        <Setter Property="Foreground" Value="#333333"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </Button.Style>
-                        </Button>
+                        <TextBlock Text="Settings" FontSize="24" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <Button Content="&#xE8BB;" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                Width="32" Height="32" FontSize="10" Cursor="Hand"
+                                Style="{StaticResource GlyphButton}"
+                                Click="SettingsCloseButton_Click"/>
                     </Grid>
 
                     <!-- Tab Bar -->
                     <Border Grid.Row="1" Margin="0,10,0,0">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="16,0">
-                                <Button x:Name="SO_TabGeneral" Click="SOTab_Click" Tag="General" Margin="0,0,12,0">
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Background" Value="Transparent"/>
-                                            <Setter Property="BorderThickness" Value="0"/>
-                                            <Setter Property="Cursor" Value="Hand"/>
-                                            <Setter Property="Padding" Value="8,10"/>
-                                            <Setter Property="Foreground" Value="#888888"/>
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="⚙" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                                            <TextBlock Text="General" FontSize="14" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                                        </StackPanel>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
-                                    </Button.Style>
+                                <Button x:Name="SO_TabGeneral" Click="SOTab_Click" Tag="General" Margin="0,0,2,0"
+                                        Style="{StaticResource SettingsTab}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE713;" Style="{StaticResource TabGlyph}"/>
+                                        <TextBlock Text="General" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Button>
-                                <Button x:Name="SO_TabColors" Click="SOTab_Click" Tag="Colors" Margin="12,0">
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Background" Value="Transparent"/>
-                                            <Setter Property="BorderThickness" Value="0"/>
-                                            <Setter Property="Cursor" Value="Hand"/>
-                                            <Setter Property="Padding" Value="8,10"/>
-                                            <Setter Property="Foreground" Value="#888888"/>
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="🎨" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                                            <TextBlock Text="Colors" FontSize="14" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                                        </StackPanel>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
-                                    </Button.Style>
+                                <Button x:Name="SO_TabColors" Click="SOTab_Click" Tag="Colors" Margin="2,0"
+                                        Style="{StaticResource SettingsTab}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE790;" Style="{StaticResource TabGlyph}"/>
+                                        <TextBlock Text="Colors" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Button>
-                                <Button x:Name="SO_TabFont" Click="SOTab_Click" Tag="Font" Margin="12,0">
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Background" Value="Transparent"/>
-                                            <Setter Property="BorderThickness" Value="0"/>
-                                            <Setter Property="Cursor" Value="Hand"/>
-                                            <Setter Property="Padding" Value="8,10"/>
-                                            <Setter Property="Foreground" Value="#888888"/>
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="𝐀" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                                            <TextBlock Text="Font" FontSize="14" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                                        </StackPanel>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
-                                    </Button.Style>
+                                <Button x:Name="SO_TabFont" Click="SOTab_Click" Tag="Font" Margin="2,0"
+                                        Style="{StaticResource SettingsTab}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE8D2;" Style="{StaticResource TabGlyph}"/>
+                                        <TextBlock Text="Font" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Button>
-                                <Button x:Name="SO_TabAbout" Click="SOTab_Click" Tag="About" Margin="12,0">
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Background" Value="Transparent"/>
-                                            <Setter Property="BorderThickness" Value="0"/>
-                                            <Setter Property="Cursor" Value="Hand"/>
-                                            <Setter Property="Padding" Value="8,10"/>
-                                            <Setter Property="Foreground" Value="#888888"/>
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="ℹ" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                                            <TextBlock Text="About" FontSize="14" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}"/>
-                                                        </StackPanel>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
-                                    </Button.Style>
+                                <Button x:Name="SO_TabAbout" Click="SOTab_Click" Tag="About" Margin="2,0"
+                                        Style="{StaticResource SettingsTab}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE946;" Style="{StaticResource TabGlyph}"/>
+                                        <TextBlock Text="About" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Button>
                             </StackPanel>
                             <Grid Margin="16,0,16,0" Height="3">
-                                <Rectangle Fill="#E8E8E8" RadiusX="2" RadiusY="2"/>
-                                <Rectangle x:Name="SO_TabUnderline" Fill="#FFD700"
+                                <Rectangle Fill="{DynamicResource BorderBrush}" RadiusX="2" RadiusY="2"/>
+                                <Rectangle x:Name="SO_TabUnderline" Fill="{DynamicResource AccentBrush}"
                                            RadiusX="2" RadiusY="2"
                                            HorizontalAlignment="Left" Width="60"/>
                             </Grid>
@@ -438,19 +402,26 @@
                     </Border>
 
                     <!-- Tab Content -->
-                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="16,12,16,16">
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="16,16,16,16">
                         <Grid>
                             <StackPanel x:Name="SO_PanelGeneral">
-                                <TextBlock Text="Transparency:" FontWeight="SemiBold" FontSize="13" Foreground="#1A1A1A" Margin="0,0,0,8"/>
+                                <TextBlock Text="Theme:" Style="{StaticResource SettingLabel}"/>
+                                <ComboBox x:Name="SO_ThemeComboBox" Margin="0,0,0,16">
+                                    <ComboBoxItem Tag="System" Content="Follow Windows"/>
+                                    <ComboBoxItem Tag="Light" Content="Light"/>
+                                    <ComboBoxItem Tag="Dark" Content="Dark"/>
+                                </ComboBox>
+                                <TextBlock Text="Transparency:" Style="{StaticResource SettingLabel}"/>
                                 <Slider x:Name="SO_TransparencySlider" Minimum="0.1" Maximum="1.0" Value="1.0" SmallChange="0.05" LargeChange="0.1"/>
-                                <TextBlock x:Name="SO_TransparencyLabel" Text="100%" FontSize="12" Foreground="#666666" Margin="0,4,0,12"/>
-                                <CheckBox x:Name="SO_AlwaysOnTopCheckBox" Content="Always on top" FontSize="13" Foreground="#1A1A1A"/>
+                                <TextBlock x:Name="SO_TransparencyLabel" Text="100%" Style="{StaticResource SettingHint}" Margin="0,4,0,14"/>
+                                <CheckBox x:Name="SO_AlwaysOnTopCheckBox" Content="Always on top" FontSize="13"/>
                             </StackPanel>
 
                             <StackPanel x:Name="SO_PanelColors" Visibility="Collapsed">
-                                <TextBlock Text="Background Color:" FontWeight="SemiBold" FontSize="13" Foreground="#1A1A1A" Margin="0,0,0,8"/>
+                                <TextBlock Text="Background Color:" Style="{StaticResource SettingLabel}"/>
                                 <ComboBox x:Name="SO_BackgroundColorComboBox" Margin="0,0,0,16">
-                                    <ComboBoxItem Tag="White" Content="White" IsSelected="True"/>
+                                    <ComboBoxItem Tag="Theme" Content="Theme default" IsSelected="True"/>
+                                    <ComboBoxItem Tag="White" Content="White"/>
                                     <ComboBoxItem Tag="Cream" Content="Cream"/>
                                     <ComboBoxItem Tag="Black" Content="Black"/>
                                     <ComboBoxItem Tag="Light Gray" Content="Light Gray"/>
@@ -459,9 +430,10 @@
                                     <ComboBoxItem Tag="Light Pink" Content="Light Pink"/>
                                     <ComboBoxItem Tag="Light Yellow" Content="Light Yellow"/>
                                 </ComboBox>
-                                <TextBlock Text="Text Color:" FontWeight="SemiBold" FontSize="13" Foreground="#1A1A1A" Margin="0,0,0,8"/>
-                                <ComboBox x:Name="SO_TextColorComboBox">
-                                    <ComboBoxItem Tag="Black" Content="Black" IsSelected="True"/>
+                                <TextBlock Text="Text Color:" Style="{StaticResource SettingLabel}"/>
+                                <ComboBox x:Name="SO_TextColorComboBox" Margin="0,0,0,12">
+                                    <ComboBoxItem Tag="Theme" Content="Theme default" IsSelected="True"/>
+                                    <ComboBoxItem Tag="Black" Content="Black"/>
                                     <ComboBoxItem Tag="Dark Gray" Content="Dark Gray"/>
                                     <ComboBoxItem Tag="Gray" Content="Gray"/>
                                     <ComboBoxItem Tag="White" Content="White"/>
@@ -470,13 +442,14 @@
                                     <ComboBoxItem Tag="Dark Red" Content="Dark Red"/>
                                     <ComboBoxItem Tag="Purple" Content="Purple"/>
                                 </ComboBox>
+                                <TextBlock Text="&quot;Theme default&quot; matches the light or dark theme." Style="{StaticResource SettingHint}"/>
                             </StackPanel>
 
                             <StackPanel x:Name="SO_PanelFont" Visibility="Collapsed">
-                                <TextBlock Text="Font Size:" FontWeight="SemiBold" FontSize="13" Foreground="#1A1A1A" Margin="0,0,0,8"/>
+                                <TextBlock Text="Font Size:" Style="{StaticResource SettingLabel}"/>
                                 <Slider x:Name="SO_FontSizeSlider" Minimum="10" Maximum="24" Value="14" SmallChange="1" LargeChange="2"/>
-                                <TextBlock x:Name="SO_FontSizeLabel" Text="14px" FontSize="12" Foreground="#666666" Margin="0,4,0,12"/>
-                                <TextBlock Text="Font Family:" FontWeight="SemiBold" FontSize="13" Foreground="#1A1A1A" Margin="0,0,0,8"/>
+                                <TextBlock x:Name="SO_FontSizeLabel" Text="14px" Style="{StaticResource SettingHint}" Margin="0,4,0,14"/>
+                                <TextBlock Text="Font Family:" Style="{StaticResource SettingLabel}"/>
                                 <ComboBox x:Name="SO_FontFamilyComboBox">
                                     <ComboBoxItem Tag="Segoe UI" Content="Segoe UI" IsSelected="True"/>
                                     <ComboBoxItem Tag="Arial" Content="Arial"/>
@@ -487,9 +460,9 @@
                             </StackPanel>
 
                             <StackPanel x:Name="SO_PanelAbout" Visibility="Collapsed">
-                                <TextBlock Text="Glass Notes" FontWeight="Bold" FontSize="16" Foreground="#1A1A1A" Margin="0,0,0,8"/>
-                                <TextBlock Text="Version 1.0.7" FontSize="13" Foreground="#666666" Margin="0,0,0,4"/>
-                                <TextBlock Text="A lightweight, transparent note-taking app." FontSize="13" Foreground="#666666" TextWrapping="Wrap"/>
+                                <TextBlock Text="Glass Notes" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Version 1.0.8" Style="{StaticResource SettingHint}" FontSize="13" Margin="0,0,0,4"/>
+                                <TextBlock Text="A lightweight, transparent note-taking app." Style="{StaticResource SettingHint}" FontSize="13"/>
                             </StackPanel>
                         </Grid>
                     </ScrollViewer>

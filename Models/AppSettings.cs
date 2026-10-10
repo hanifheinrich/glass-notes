@@ -9,7 +9,7 @@ public partial class AppSettings : ObservableObject
 {
     // Theme settings
     [ObservableProperty]
-    private string _theme = "Light"; // "Light", "Dark", or "Auto"
+    private string _theme = "System"; // "Light", "Dark", or "System" (follow Windows)
 
     [ObservableProperty]
     private double _opacity = 0.95;
@@ -26,10 +26,10 @@ public partial class AppSettings : ObservableObject
 
     // Color settings
     [ObservableProperty]
-    private string _backgroundColor = "Cream"; // Cream, White, Black, Light Gray, Light Blue, Light Green, Light Pink
+    private string _backgroundColor = "Theme"; // Theme (follows light/dark), Cream, White, Black, Light Gray, Light Blue, Light Green, Light Pink
 
     [ObservableProperty]
-    private string _textColor = "Black"; // Black, Dark Gray, Gray, White, Dark Blue, Dark Green, Dark Red, Purple
+    private string _textColor = "Theme"; // Theme (follows light/dark), Black, Dark Gray, Gray, White, Dark Blue, Dark Green, Dark Red, Purple
 
     // Window settings
     [ObservableProperty]

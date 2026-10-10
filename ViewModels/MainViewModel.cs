@@ -87,6 +87,22 @@ public partial class MainViewModel : ObservableObject
             ? loadedNotes.OrderBy(n => n.ModifiedAt).ToList()
             : loadedNotes.OrderByDescending(n => n.ModifiedAt).ToList();
 
+        // Notes arranged by drag and drop keep their order; notes missing from it
+        // go where a new note would (top for newest first, bottom for oldest first)
+        if (Settings.CustomNoteOrder.Count > 0)
+        {
+            var position = Settings.CustomNoteOrder
+                .Select((id, index) => (id, index))
+                .GroupBy(p => p.id)
+                .ToDictionary(g => g.Key, g => g.First().index);
+            var arranged = sortedNotes.Where(n => position.ContainsKey(n.Id)).OrderBy(n => position[n.Id]);
+            var unarranged = sortedNotes.Where(n => !position.ContainsKey(n.Id));
+
+            sortedNotes = Settings.NoteSortOrder == "OldestFirst"
+                ? arranged.Concat(unarranged).ToList()
+                : unarranged.Concat(arranged).ToList();
+        }
+
         Notes = new ObservableCollection<Note>(sortedNotes);
 
         // Select the last opened note or the first note
@@ -140,6 +156,12 @@ public partial class MainViewModel : ObservableObject
                 _autoSaveTimer.Start();
             }
         }
+        else if (e.PropertyName == nameof(Note.RichContent) && CurrentNote != null)
+        {
+            // Formatting-only changes (e.g. making a word bold) also need saving
+            _autoSaveTimer.Stop();
+            _autoSaveTimer.Start();
+        }
     }
 
     private void AutoSaveTimer_Tick(object? sender, EventArgs e)
@@ -178,6 +200,29 @@ public partial class MainViewModel : ObservableObject
 
         CurrentNote = newNote;
         _noteService.SaveNote(newNote);
+        SaveNoteOrder();
+    }
+
+    /// <summary>
+    /// Moves a note to a new position in the list (drag and drop) and remembers the order.
+    /// </summary>
+    public void MoveNote(Note note, int newIndex)
+    {
+        int oldIndex = Notes.IndexOf(note);
+        if (oldIndex == -1) return;
+
+        newIndex = Math.Clamp(newIndex, 0, Notes.Count - 1);
+        if (newIndex != oldIndex)
+        {
+            Notes.Move(oldIndex, newIndex);
+            SaveNoteOrder();
+        }
+    }
+
+    private void SaveNoteOrder()
+    {
+        Settings.CustomNoteOrder = Notes.Select(n => n.Id).ToList();
+        SaveSettings();
     }
 
     [RelayCommand]
@@ -203,6 +248,7 @@ public partial class MainViewModel : ObservableObject
             }
 
             _noteService.DeleteNote(noteToDelete.Id);
+            SaveNoteOrder();
         }
     }
 
